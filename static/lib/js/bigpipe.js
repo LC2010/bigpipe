@@ -20,6 +20,7 @@ window['BigPipe'] = (function() {
             }
         };
         xhr.open(data?'POST':'GET', url, true);
+        if (data) xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.send(data);
     }
