@@ -93,7 +93,7 @@ window['BigPipe'] = (function() {
 
         var css = contents[1];
         if (css.length > 0) {
-            css = css.join('\n')
+            css = css.join('\n');
             if (! (css in styles)) {
                 styles[css] = true;
 
@@ -118,13 +118,20 @@ window['BigPipe'] = (function() {
             ]
         }
     */
-    function register(obj) {
+    function register(obj, contents) {
         var res = obj.res || {};
         var attr = ['js', 'css'];
-        var contents = [[], []];
         var diff = [];
+        var first;
+        
+        if (!contents) {
+            // 分别保存js,css 列表
+           contents = [[], []];
+           first = true;
+        }
 
         for(var i = 0; i <= 1; i++) {
+            // 依次遍历js,css
             var list = res[attr[i]] || [];
 
             for(var j = 0, n = list.length; j < n; j++) {
@@ -134,12 +141,13 @@ window['BigPipe'] = (function() {
                     localStorage[r.id] = r.hash + ',' + r.content;
                     contents[i].push(r.content);
                 }
-                else {                // 不带内容，本地hash比对
+                else {                  // 不带内容，本地hash比对
                     var cache = localStorage[r.id] || '';
                     var pos = cache.indexOf(',');
                     var hash = cache.substr(0, pos);
 
                     if (hash != r.hash) {
+                        // 添加需更新的资源
                         diff.push('ids[]=' + encodeURI(r.id));
                     }
                     else {
@@ -149,13 +157,16 @@ window['BigPipe'] = (function() {
             }
         }
 
-        //
-        // 提交diff，下次收到内容再执行
-        //
         if (diff.length > 0) {
+            if (!first) {
+                throw new Error('update list is not lastest');
+            }
+
+            // 请求提交diff
             ajax(URL_DIFF, function(data) {
-                register(JSON.parse(data));
+                register(JSON.parse(data), contents);
             }, diff.join('&'));
+
             return;
         }
 
@@ -180,6 +191,8 @@ window['BigPipe'] = (function() {
 
         ajax(url, function(data) {
             if (id == containerId) {
+                //histroy.pushState();
+
                 onPagelets(JSON.parse(data), id);
             }
         });
